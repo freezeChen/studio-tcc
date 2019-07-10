@@ -10,3 +10,8 @@ type GenOrderReq struct {
 	Gid int64 `json:"gid"`
 	Num int   `json:"num"`
 }
+
+type Response struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+}

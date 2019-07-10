@@ -13,6 +13,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"steam/conf"
 	"steam/model"
+	"steam/pkg/snowflake"
 )
 
 const _URL = "http://localhost:8080/"
@@ -30,9 +31,11 @@ func New(c *conf.Config) (dao *Dao) {
 	return
 }
 
-func (d Dao) GetOrderBus() *model.Bus {
+//获取事务节点
+func (d Dao) GetOrderBus() *model.TCCBus {
 
-	var b = new(model.Bus)
+	var b = new(model.TCCBus)
+	b.Id = snowflake.GenID()
 	b.TCCS = make([]*model.TCC, 0)
 
 	//user
@@ -76,4 +79,42 @@ func (d Dao) GetOrderBus() *model.Bus {
 		},
 	})
 
+	return b
+
+}
+
+//新增事务
+func (d Dao) GentTransaction(busId int64, param string) *model.Transaction {
+	var trans = &model.Transaction{
+		Id:     snowflake.GenID(),
+		Busid:  busId,
+		Status: 0,
+		Param:  param,
+	}
+
+	affect, err := d.Db.InsertOne(trans)
+	if err != nil || affect == 0 {
+		return nil
+	}
+
+	return trans
+}
+
+//保存try步骤
+func (d Dao) SaveTryStep(ts []*model.TryStep) error {
+
+	session := d.Db.NewSession()
+	session.Begin()
+	defer session.Close()
+
+	_, err := session.Insert(&ts)
+	if err != nil {
+		return err
+	}
+
+	if err := session.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
