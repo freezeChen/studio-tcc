@@ -16,6 +16,7 @@ import (
 
 type Service struct {
 	dao *dao.Dao
+
 }
 
 func New(c *conf.Config) (s *Service) {
@@ -40,7 +41,6 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 	err2 := svc.dao.SaveTryStep(trySteps)
 	if err2 != nil {
 		//TODO 数据库保存失败 写入日志保存
-		svc.dao.Db.Insert()
 	}
 
 	if err != nil || err2 != nil {
@@ -77,6 +77,8 @@ func (svc Service) Try(req *model.DoingReq, bus *model.TCCBus) (successStep []*m
 func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus, steps []*model.TryStep) (err error) {
 	ids, err := svc.dao.DoCancel(req, steps)
 	if err != nil {
+
+		//cancel 操作失败
 		if err := svc.dao.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
 			//TODO 事务状态修改失败 操作
 			return err
@@ -87,12 +89,21 @@ func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus,
 	for _, v := range ids {
 		if err := svc.dao.SetStepStatus(v, model.Step_cancel_success); err != nil {
 			//TODO 状态修改失败
+			return
 		}
 	}
 
-	if err := svc.dao.SetTransactionStatus(transId, model.Trans_cancel_success); err != nil {
+	if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_success); err != nil {
 		//TODO
+		return
 	}
 
 	return
+}
+
+func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus) (err error) {
+
+
+
+
 }
