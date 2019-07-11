@@ -7,6 +7,7 @@
 package dao
 
 import (
+	"errors"
 	"github.com/freezeChen/studio-library/database/mysql"
 	"github.com/freezeChen/studio-library/redis"
 	_ "github.com/go-sql-driver/mysql"
@@ -14,6 +15,7 @@ import (
 	"steam/conf"
 	"steam/model"
 	"steam/pkg/snowflake"
+	"steam/pkg/util"
 )
 
 const _URL = "http://localhost:8080/"
@@ -116,5 +118,50 @@ func (d Dao) SaveTryStep(ts []*model.TryStep) error {
 		return err
 	}
 
+	return nil
+}
+
+func (d Dao) DoCancel(req *model.DoingReq, steps []*model.TryStep) (ids []int64, err error) {
+	for _, v := range steps {
+		response, err := util.HttpPost(v.Tcc.Cancel.Url, []byte(req.Param))
+		if err != nil {
+			return
+		}
+
+		if response.Code == 0 {
+			err = errors.New(response.Msg)
+			return
+		}
+		ids = append(ids, v.Tcc.Id)
+	}
+	return
+}
+
+//修改事务状态
+func (d Dao) SetTransactionStatus(id int64, status int64) error {
+	result, err := d.Db.Exec("update transaction.transaction set status = ? where id=?;", status, id)
+	if err != nil {
+		return err
+	}
+
+	affected, _ := result.RowsAffected()
+	if affected == 0 {
+		return errors.New("not affected")
+	}
+
+	return nil
+}
+
+func (d Dao) SetStepStatus(id int64, status int) error {
+
+	result, err := d.Db.Exec("update try_step set status = ? where id =?;", status, id)
+	if err != nil {
+		return err
+	}
+
+	affected, _ := result.RowsAffected()
+	if affected == 0 {
+		return errors.New("not affected")
+	}
 	return nil
 }

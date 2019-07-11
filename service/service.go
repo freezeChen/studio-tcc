@@ -35,18 +35,19 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 		return
 	}
 
-	tryRes, err := svc.Try(req, bus)
+	trySteps, err := svc.Try(req, bus)
 
-	err2 := svc.dao.SaveTryStep(tryRes)
+	err2 := svc.dao.SaveTryStep(trySteps)
 	if err2 != nil {
 		//TODO 数据库保存失败 写入日志保存
-
+		svc.dao.Db.Insert()
 	}
 
 	if err != nil || err2 != nil {
-		svc.Cancel()
+		svc.Cancel(transaction.Id, req, bus, trySteps)
 	}
 
+	return
 }
 
 //执行try操作 返回操作成功的请求
@@ -56,7 +57,7 @@ func (svc Service) Try(req *model.DoingReq, bus *model.TCCBus) (successStep []*m
 		var response = new(model.Response)
 		response, err = util.HttpPost(v.Try.Url, []byte(req.Param))
 		try.Url = v.Try.Url
-		try.NodeId = try.Id
+		try.NodeId = v.Id
 		try.Param = req.Param
 		if err != nil {
 			return
@@ -73,6 +74,25 @@ func (svc Service) Try(req *model.DoingReq, bus *model.TCCBus) (successStep []*m
 	return
 }
 
-func (svc Service) Cancel(req *model.DoingReq, bus *model.TCCBus) (err error) {
-	
+func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus, steps []*model.TryStep) (err error) {
+	ids, err := svc.dao.DoCancel(req, steps)
+	if err != nil {
+		if err := svc.dao.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
+			//TODO 事务状态修改失败 操作
+			return err
+		}
+		return
+	}
+
+	for _, v := range ids {
+		if err := svc.dao.SetStepStatus(v, model.Step_cancel_success); err != nil {
+			//TODO 状态修改失败
+		}
+	}
+
+	if err := svc.dao.SetTransactionStatus(transId, model.Trans_cancel_success); err != nil {
+		//TODO
+	}
+
+	return
 }

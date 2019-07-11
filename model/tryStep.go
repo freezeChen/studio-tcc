@@ -6,6 +6,15 @@
 */
 package model
 
+const (
+	Step_try_success = iota + 1
+	Step_cancel_fail
+	Step_cancel_success
+	Step_confirm_fail
+	step_comfirm_success
+)
+
+//(1:try成功;2:cancel失败;3:cancel成功;4:confirm失败;5:confirm成功)
 type TryStep struct {
 	Id      int64  `json:"id" xorm:"pk 'id'"`
 	TransId int64  `json:"trans_id" xorm:"trans_id"`
