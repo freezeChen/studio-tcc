@@ -8,7 +8,7 @@ mysql:
   idle: 20
   show: true
 log:
-  name: server
+  name: "server"
   debug: true
   LogFileDir: "./log/"
   KafkaAddr: "127.0.0.1:9092"

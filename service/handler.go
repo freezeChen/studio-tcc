@@ -9,7 +9,7 @@ package service
 import (
 	"context"
 	"fmt"
-	"steam/proto"
+	"studio-tcc/proto"
 )
 
 func (Service) Hello(ctx context.Context, req *proto.Req, reply *proto.Reply) error {

@@ -9,9 +9,9 @@ package main
 import (
 	"github.com/freezeChen/studio-library/zlog"
 	"github.com/gin-gonic/gin"
-	"steam/conf"
-	"steam/server/http"
-	"steam/service"
+	"studio-tcc/conf"
+	"studio-tcc/server/http"
+	"studio-tcc/service"
 )
 
 func main() {

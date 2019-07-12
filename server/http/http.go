@@ -2,8 +2,8 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"steam/model"
-	"steam/service"
+	"studio-tcc/model"
+	"studio-tcc/service"
 )
 
 var (
@@ -17,7 +17,7 @@ type Controller struct {
 func InitRouter(engine *gin.Engine, s *service.Service) {
 	svc = s
 	c := &Controller{}
-	engine.GET("/doing", c.doing)
+	engine.POST("/doing", c.doing)
 
 }
 
@@ -25,14 +25,19 @@ func (self Controller) doing(ctx *gin.Context) {
 	defer func() {
 		self.Response(ctx)
 	}()
+	self.Code = -1
 	var param model.DoingReq
 	if err := ctx.ShouldBind(&param); err != nil {
 		self.Msg = "参数错误"
 		return
 	}
 
+	err := svc.HandlerRequest(&param)
+	if err != nil {
+		self.Msg = err.Error()
+		return
+	}
 
-
-
+	self.Code = 0
 
 }

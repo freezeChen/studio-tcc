@@ -6,17 +6,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"steam/model"
+	"studio-tcc/model"
 )
 
-func HttpPost(url string, param []byte) (*model.Response, error) {
+func HttpPost(url string, param *model.CallReq) (*model.Response, error) {
 
-	r, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(param))
+	marshal, err := json.Marshal(param)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := (&http.Client{}).Do(r)
+	fmt.Println(string(marshal))
+
+
+	rsp, err := http.DefaultClient.Post(url,"application/json",bytes.NewReader(marshal))
 
 	if err != nil {
 		return nil, err

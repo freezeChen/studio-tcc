@@ -12,13 +12,13 @@ import (
 	"github.com/freezeChen/studio-library/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"steam/conf"
-	"steam/model"
-	"steam/pkg/snowflake"
-	"steam/pkg/util"
+	"studio-tcc/conf"
+	"studio-tcc/model"
+	"studio-tcc/pkg/snowflake"
+	"studio-tcc/pkg/util"
 )
 
-const _URL = "http://localhost:8080/"
+const _URL = "http://localhost:8081/"
 
 type Dao struct {
 	Db    xorm.EngineInterface
@@ -37,7 +37,7 @@ func New(c *conf.Config) (dao *Dao) {
 func (d Dao) GetOrderBus() *model.TCCBus {
 
 	var b = new(model.TCCBus)
-	b.Id = snowflake.GenID()
+	b.Id = 1
 	b.TCCS = make([]*model.TCC, 0)
 
 	//user
@@ -121,10 +121,10 @@ func (d Dao) SaveTryStep(ts []*model.TryStep) error {
 	return nil
 }
 
-func (d Dao) DoCancel(req *model.DoingReq, steps []*model.TryStep) (ids []int64, err error) {
+func (d Dao) DoCancel(transId int64, req *model.DoingReq, steps []*model.TryStep) (ids []int64, err error) {
 	for _, v := range steps {
-		response, err := util.HttpPost(v.Tcc.Cancel.Url, []byte(req.Param))
-		if err != nil {
+		response, err1 := util.HttpPost(v.Tcc.Cancel.Url, &model.CallReq{TransId: transId, Param: req.Param})
+		if err1 != nil {
 			return
 		}
 

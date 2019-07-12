@@ -15,3 +15,8 @@ type Response struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
 }
+
+type CallReq struct {
+	TransId int64  `json:"transId"`
+	Param   string `json:"param"`
+}
