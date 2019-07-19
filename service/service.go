@@ -13,15 +13,18 @@ import (
 	"studio-tcc/dao"
 	"studio-tcc/model"
 	"studio-tcc/pkg/util"
+	"studio-tcc/tcc"
 )
 
 type Service struct {
 	dao *dao.Dao
+	tcc tcc.Tcc
 }
 
 func New(c *conf.Config) (s *Service) {
 	s = &Service{
 		dao: dao.New(c),
+		tcc: tcc.New(),
 	}
 	return s
 }
@@ -36,7 +39,10 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 		return
 	}
 
-	trySteps, err := svc.Try(transaction.Id, req, bus)
+
+
+
+	trySteps, err := svc.tcc.Try(transaction.Id, req, bus)
 
 	err2 := svc.dao.SaveTryStep(trySteps)
 	if err2 != nil {
@@ -87,9 +93,8 @@ func (svc Service) Try(transId int64, req *model.DoingReq, bus *model.TCCBus) (s
 }
 
 func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus, steps []*model.TryStep) (err error) {
-	ids, err := svc.dao.DoCancel(transId, req, steps)
+	ids, err := svc.tcc.Cancel(transId, req, bus,steps)
 	if err != nil {
-
 		//cancel 操作失败
 		if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
 			//TODO 事务状态修改失败 操作
@@ -117,7 +122,8 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 
 	var response *model.Response
 	for _, v := range bus.TCCS {
-		response, err = util.HttpPost(v.Confirm.Url, &model.CallReq{TransId: transId, Param: req.Param})
+		
+		response, err = svc.tcc.Confirm(transId,req,v)
 		if err != nil {
 			if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
 				zlog.Infof("set transaction confirm_fail error(%v)", err)

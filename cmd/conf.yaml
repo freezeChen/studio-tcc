@@ -18,8 +18,8 @@ redis:
   auth: ""
   active: 100
   idle: 20
-  dialTimeout: "1ms"
-  readTimeout: "1ms"
-  writeTimeout: "1ms"
-  idleTimeout: "1ms"
+  dialTimeout: "20ms"
+  readTimeout: "20ms"
+  writeTimeout: "20ms"
+  idleTimeout: "20ms"
 kafka: "127.0.0.1:9092"
