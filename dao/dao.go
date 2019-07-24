@@ -102,6 +102,16 @@ func (d Dao) GentTransaction(busId int64, param string) *model.Transaction {
 	return trans
 }
 
+//(1:try成功;2:try失败;3:cancel成功;4:cancel失败;5:confirm成功;6:confirm失败;7:人工干预)
+func (d Dao) GetExTransactionList() []*model.Transaction {
+	d.Db.SQL("select * from transaction.transaction where status in (1,2,4,6) and update_time")
+	//xorm.Engine{}.DB().Query("select * from bus")
+}
+
+func ss(query string, arg ...interface{}) {
+
+}
+
 //保存try步骤
 func (d Dao) SaveTryStep(ts []*model.TryStep) error {
 

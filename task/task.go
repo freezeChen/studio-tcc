@@ -6,13 +6,20 @@
 */
 package task
 
-import "time"
+import (
+	"studio-tcc/model"
+	"studio-tcc/service"
+	"time"
+)
 
 type Task struct {
+	svc *service.Service
 }
 
-func New() *Task {
-	return &Task{}
+func New(s *service.Service) *Task {
+	return &Task{
+		svc: s,
+	}
 }
 
 func Run() {
@@ -24,4 +31,8 @@ func Run() {
 		}
 
 	}()
+}
+
+func (t *Task) getExTransactionList() []*model.Transaction {
+//t.svc
 }

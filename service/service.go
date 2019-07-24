@@ -39,9 +39,6 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 		return
 	}
 
-
-
-
 	trySteps, err := svc.tcc.Try(transaction.Id, req, bus)
 
 	err2 := svc.dao.SaveTryStep(trySteps)
@@ -93,7 +90,7 @@ func (svc Service) Try(transId int64, req *model.DoingReq, bus *model.TCCBus) (s
 }
 
 func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus, steps []*model.TryStep) (err error) {
-	ids, err := svc.tcc.Cancel(transId, req, bus,steps)
+	ids, err := svc.tcc.Cancel(transId, req, bus, steps)
 	if err != nil {
 		//cancel 操作失败
 		if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
@@ -122,8 +119,8 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 
 	var response *model.Response
 	for _, v := range bus.TCCS {
-		
-		response, err = svc.tcc.Confirm(transId,req,v)
+
+		response, err = svc.tcc.Confirm(transId, req, v)
 		if err != nil {
 			if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
 				zlog.Infof("set transaction confirm_fail error(%v)", err)
@@ -148,4 +145,8 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 	}
 
 	return
+}
+
+func (svc Service) TaskGetTransactionList() []*model.Transaction {
+	svc.dao.GentTransaction()
 }
