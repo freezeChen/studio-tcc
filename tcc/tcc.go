@@ -51,8 +51,8 @@ func (tcc) Confirm(transId int64, req *model.DoingReq, tcc *model.TCC) (*model.R
 
 func (tcc) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus, steps []*model.TryStep) (ids []int64, err error) {
 	for _, v := range steps {
-		response, err1 := util.HttpPost(v.Tcc.Cancel.Url, &model.CallReq{TransId: transId, Param: req.Param})
-		if err1 != nil {
+		response, err := util.HttpPost(v.Tcc.Cancel.Url, &model.CallReq{TransId: transId, Param: req.Param})
+		if err != nil {
 			return
 		}
 

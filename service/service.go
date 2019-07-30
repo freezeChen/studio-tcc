@@ -64,6 +64,10 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 	return
 }
 
+func (svc Service) GetBus(busId int64) *model.TCCBus {
+	return svc.dao.GetOrderBus()
+}
+
 //执行try操作 返回操作成功的请求
 func (svc Service) Try(transId int64, req *model.DoingReq, bus *model.TCCBus) (successStep []*model.TryStep, err error) {
 	for _, v := range bus.TCCS {
@@ -148,5 +152,5 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 }
 
 func (svc Service) TaskGetTransactionList() []*model.Transaction {
-	svc.dao.GentTransaction()
+	return svc.dao.GetExTransactionList()
 }

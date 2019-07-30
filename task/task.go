@@ -7,6 +7,7 @@
 package task
 
 import (
+	"encoding/json"
 	"studio-tcc/model"
 	"studio-tcc/service"
 	"time"
@@ -34,5 +35,26 @@ func Run() {
 }
 
 func (t *Task) getExTransactionList() []*model.Transaction {
-//t.svc
+	list := t.svc.TaskGetTransactionList()
+	for _, v := range list {
+	}
+
+}
+
+func (t *Task) exec(trans *model.Transaction) {
+	bus := t.svc.GetBus(trans.Busid)
+	req := model.DoingReq{}
+	if err := json.Unmarshal([]byte(trans.Param), &req); err != nil {
+		return
+	}
+
+	switch trans.Status {
+	case 1:
+		t.svc.Confirm(trans.Id, &req, bus)
+		//t.svc.Confirm(trans.Id, trans.Param)
+
+	case 4:
+	case 6:
+
+	}
 }

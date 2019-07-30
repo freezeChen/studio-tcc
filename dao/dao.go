@@ -104,12 +104,13 @@ func (d Dao) GentTransaction(busId int64, param string) *model.Transaction {
 
 //(1:try成功;2:try失败;3:cancel成功;4:cancel失败;5:confirm成功;6:confirm失败;7:人工干预)
 func (d Dao) GetExTransactionList() []*model.Transaction {
-	d.Db.SQL("select * from transaction.transaction where status in (1,2,4,6) and update_time")
-	//xorm.Engine{}.DB().Query("select * from bus")
-}
-
-func ss(query string, arg ...interface{}) {
-
+	var list = make([]*model.Transaction, 0)
+	if err := d.Db.SQL(`select * from transaction.transaction 
+			where status=1 or (status=2 and try_times<5) or (status=4 and cancel_times<5) or (status=6 or confirm_times<5)
+			and update_time>date_add(now(),interval -1 minute )`).Find(&list); err != nil {
+		return nil
+	}
+	return list
 }
 
 //保存try步骤
@@ -149,7 +150,18 @@ func (d Dao) DoCancel(transId int64, req *model.DoingReq, steps []*model.TryStep
 
 //修改事务状态
 func (d Dao) SetTransactionStatus(id int64, status int64) error {
-	result, err := d.Db.Exec("update transaction.transaction set status = ? where id=?;", status, id)
+	var sql string
+
+	switch status {
+	case model.Trans_cancel_fail:
+		sql = "update transaction.transaction set status = ?,cancel_times=cancel_times+1 where id=?;"
+	case model.Trans_confirm_fail:
+		sql = "update transaction.transaction set status = ?,confirm_times=confirm_times+1 where id=?;"
+	default:
+		sql = "update transaction.transaction set status = ? where id=?;"
+	}
+
+	result, err := d.Db.Exec(sql, status, id)
 	if err != nil {
 		return err
 	}
