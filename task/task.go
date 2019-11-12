@@ -8,9 +8,10 @@ package task
 
 import (
 	"encoding/json"
+	"time"
+
 	"studio-tcc/model"
 	"studio-tcc/service"
-	"time"
 )
 
 type Task struct {
@@ -36,9 +37,8 @@ func Run() {
 
 func (t *Task) getExTransactionList() []*model.Transaction {
 	list := t.svc.TaskGetTransactionList()
-	for _, v := range list {
-	}
 
+	return list
 }
 
 func (t *Task) exec(trans *model.Transaction) {
