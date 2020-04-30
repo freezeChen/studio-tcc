@@ -8,6 +8,8 @@ package dao
 
 import (
 	"errors"
+	"fmt"
+
 	"github.com/freezeChen/studio-library/database/mysql"
 	"github.com/freezeChen/studio-library/redis"
 	_ "github.com/go-sql-driver/mysql"
@@ -96,6 +98,7 @@ func (d Dao) GentTransaction(busId int64, param string) *model.Transaction {
 
 	affect, err := d.Db.InsertOne(trans)
 	if err != nil || affect == 0 {
+		fmt.Println(err)
 		return nil
 	}
 

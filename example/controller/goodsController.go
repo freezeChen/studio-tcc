@@ -64,7 +64,7 @@ func (self GoodsController) try(ctx *gin.Context) {
 		return
 	}
 
-	result, err := session.Exec("update goods set num_lock = num_lock+? where num>num_lock+? and id=?;", oParam.Num, oParam.Num, oParam.Gid)
+	result, err := session.Exec("update goods set num_lock = num_lock+? where num>=num_lock+? and id=?;", oParam.Num, oParam.Num, oParam.Gid)
 	if err != nil {
 		return
 	}
@@ -111,7 +111,7 @@ func (self GoodsController) confirm(ctx *gin.Context) {
 	if err := AddTrans(session, param.TransId, 2, 2); err != nil {
 		return
 	}
-	result, err := session.Exec("update goods set num = num-? ,num_lock=num_lock-? where num_lock>? and id=?;", oParam.Num, oParam.Num, oParam.Num, oParam.Gid)
+	result, err := session.Exec("update goods set num = num-? ,num_lock=num_lock-? where num_lock>=? and id=?;", oParam.Num, oParam.Num, oParam.Num, oParam.Gid)
 	if err != nil {
 		return
 	}

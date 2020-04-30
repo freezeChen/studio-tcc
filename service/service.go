@@ -7,13 +7,17 @@
 package service
 
 import (
+	context "context"
 	"errors"
-	"github.com/freezeChen/studio-library/zlog"
+
 	"studio-tcc/conf"
 	"studio-tcc/dao"
 	"studio-tcc/model"
 	"studio-tcc/pkg/util"
 	"studio-tcc/tcc"
+
+	"github.com/freezeChen/studio-library/lib/errgroup"
+	"github.com/freezeChen/studio-library/zlog"
 )
 
 type Service struct {
@@ -122,29 +126,35 @@ func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus,
 func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus) (err error) {
 
 	var response *model.Response
-	for _, v := range bus.TCCS {
+	group := errgroup.Group{}
 
-		response, err = svc.tcc.Confirm(transId, req, v)
-		if err != nil {
-			if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
-				zlog.Infof("set transaction confirm_fail error(%v)", err)
-				return
+	for _, vo := range bus.TCCS {
+		v := vo
+		group.Go(func(ctx context.Context) error {
+			response, err = svc.tcc.Confirm(transId, req, v)
+			if err != nil {
+				if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
+					zlog.Infof("set transaction confirm_fail error(%v)", err)
+					return err
+				}
+
+				return err
 			}
 
-			return
-		}
-
-		if response.Code != 0 {
-			zlog.Infof("do confirm error(%s)", response.Msg)
-			if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
-				zlog.Infof("set transaction confirm_fail error(%v)", err)
-				return
+			if response.Code != 0 {
+				zlog.Infof("do confirm error(%s)", response.Msg)
+				if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
+					zlog.Infof("set transaction confirm_fail error(%v)", err)
+					return err
+				}
+				return err
 			}
-			return
-		}
+			return nil
+		})
 
 	}
 
+	group.Wait()
 	if err := svc.dao.SetTransactionStatus(transId, model.Trans_confirm_success); err != nil {
 	}
 
