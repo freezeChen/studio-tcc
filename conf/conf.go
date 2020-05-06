@@ -1,4 +1,3 @@
-
 package conf
 
 import (
@@ -7,7 +6,7 @@ import (
 	"github.com/freezeChen/studio-library/redis"
 	"github.com/freezeChen/studio-library/util"
 	"github.com/freezeChen/studio-library/zlog"
-	"github.com/micro/go-micro/config"
+	"github.com/micro/go-micro/v2/config"
 )
 
 type Config struct {
@@ -15,16 +14,20 @@ type Config struct {
 	Version string
 	Env     string
 	Debug   bool
-	Log		*zlog.Config
+	Log     *zlog.Config
 	Mysql   *mysql.Config
 	Redis   *redis.Config
 }
 
 func Init() (*Config, error) {
+
 	var (
 		Conf = &Config{}
 	)
-	cfg := config.NewConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		return nil, err
+	}
 
 	source := conf.LoadFileSource(util.GetCurrentDirectory() + "/conf.yaml")
 	cfg.Load(source)
@@ -34,4 +37,3 @@ func Init() (*Config, error) {
 
 	return Conf, nil
 }
-

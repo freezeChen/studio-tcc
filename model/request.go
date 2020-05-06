@@ -2,7 +2,7 @@ package model
 
 type DoingReq struct {
 	Index string `json:"index"`
-	Param string `json:"param"`
+	Param string `json:"param" binding:"required"`
 }
 
 type GenOrderReq struct {

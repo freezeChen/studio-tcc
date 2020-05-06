@@ -1,6 +1,6 @@
 /*
    @Time : 2019-07-09 21:57:17
-   @Author : 
+   @Author :
    @File : service
    @Software: server
 */
@@ -16,4 +16,3 @@ func (Service) Hello(ctx context.Context, req *proto.Req, reply *proto.Reply) er
 	reply.Message = fmt.Sprintf("hello %s, Congratulations you success call rpc service!", req.S)
 	return nil
 }
-

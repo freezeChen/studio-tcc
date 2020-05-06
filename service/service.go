@@ -98,7 +98,7 @@ func (svc Service) Try(transId int64, req *model.DoingReq, bus *model.TCCBus) (s
 }
 
 func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus, steps []*model.TryStep) (err error) {
-	ids, err := svc.tcc.Cancel(transId, req, bus, steps)
+	_, err = svc.tcc.Cancel(transId, req, bus, steps)
 	if err != nil {
 		//cancel 操作失败
 		if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
@@ -108,12 +108,12 @@ func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus,
 		return
 	}
 
-	for _, v := range ids {
-		if err = svc.dao.SetStepStatus(v, model.Step_cancel_success); err != nil {
-			//TODO 状态修改失败
-			return
-		}
-	}
+	//for _, v := range ids {
+	//	if err = svc.dao.SetStepStatus(v, model.Step_cancel_success); err != nil {
+	//		//TODO 状态修改失败
+	//		return
+	//	}
+	//}
 
 	if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_success); err != nil {
 		//TODO

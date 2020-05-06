@@ -81,10 +81,18 @@ func (self GoodsController) try(ctx *gin.Context) {
 
 }
 
+var i int
+
 func (self GoodsController) confirm(ctx *gin.Context) {
 	defer func() {
 		self.Response(ctx)
 	}()
+
+	i++
+	if i%2 != 0 {
+		self.Code = 500
+		return
+	}
 
 	var param model.CallReq
 

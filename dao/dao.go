@@ -13,11 +13,11 @@ import (
 	"github.com/freezeChen/studio-library/database/mysql"
 	"github.com/freezeChen/studio-library/redis"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"studio-tcc/conf"
 	"studio-tcc/model"
 	"studio-tcc/pkg/snowflake"
 	"studio-tcc/pkg/util"
+	"xorm.io/xorm"
 )
 
 const _URL = "http://localhost:8081/"
@@ -110,7 +110,7 @@ func (d Dao) GetExTransactionList() []*model.Transaction {
 	var list = make([]*model.Transaction, 0)
 	if err := d.Db.SQL(`select * from transaction.transaction 
 			where status=1 or (status=2 and try_times<5) or (status=4 and cancel_times<5) or (status=6 or confirm_times<5)
-			and update_time>date_add(now(),interval -1 minute )`).Find(&list); err != nil {
+			and mtime>date_add(now(),interval -1 minute )`).Find(&list); err != nil {
 		return nil
 	}
 	return list

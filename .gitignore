@@ -15,3 +15,6 @@ cmd/cmd
 example/cmd/cmd
 .idea/
 log/
+.vscode
+default.etcd
+

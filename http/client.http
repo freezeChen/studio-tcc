@@ -1,0 +1,10 @@
+POST http://localhost:8080/doing
+Content-Type: application/json
+
+{
+  "param": "{\"gid\": 1, \"num\": 1, \"uid\": 1}",
+  "index": "1"
+}
+
+
+

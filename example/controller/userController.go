@@ -11,8 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-xorm/xorm"
 	"studio-tcc/model"
+	"xorm.io/xorm"
 )
 
 type UserController struct {

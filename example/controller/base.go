@@ -6,6 +6,6 @@
 */
 package controller
 
-import "github.com/go-xorm/xorm"
+import "xorm.io/xorm"
 
 var Db xorm.EngineInterface
