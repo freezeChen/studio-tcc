@@ -11,9 +11,9 @@ import (
 	"errors"
 
 	"studio-tcc/conf"
-	"studio-tcc/dao"
 	"studio-tcc/model"
 	"studio-tcc/pkg/util"
+	"studio-tcc/repository"
 	"studio-tcc/tcc"
 
 	"github.com/freezeChen/studio-library/lib/errgroup"
@@ -21,23 +21,23 @@ import (
 )
 
 type Service struct {
-	dao *dao.Dao
-	tcc tcc.Tcc
+	repo repository.Repository
+	tcc  tcc.Tcc
 }
 
 func New(c *conf.Config) (s *Service) {
 	s = &Service{
-		dao: dao.New(c),
-		tcc: tcc.New(),
+		repo: repository.New(c),
+		tcc:  tcc.New(),
 	}
 	return s
 }
 
 //处理请求
 func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
-	bus := svc.dao.GetOrderBus()
+	bus := svc.repo.GetBus()
 
-	transaction := svc.dao.GentTransaction(bus.Id, req.Param)
+	transaction := svc.repo.GentTransaction(bus.Id, req.Param)
 	if transaction == nil {
 		err = errors.New("事务启动失败")
 		return
@@ -45,7 +45,7 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 
 	trySteps, err := svc.tcc.Try(transaction.Id, req, bus)
 
-	err2 := svc.dao.SaveTryStep(trySteps)
+	err2 := svc.repo.SaveTryStep(trySteps)
 	if err2 != nil {
 		//TODO 数据库保存失败 写入日志保存
 	}
@@ -69,7 +69,7 @@ func (svc Service) HandlerRequest(req *model.DoingReq) (err error) {
 }
 
 func (svc Service) GetBus(busId int64) *model.TCCBus {
-	return svc.dao.GetOrderBus()
+	return svc.repo.GetBus()
 }
 
 //执行try操作 返回操作成功的请求
@@ -101,7 +101,7 @@ func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus,
 	_, err = svc.tcc.Cancel(transId, req, bus, steps)
 	if err != nil {
 		//cancel 操作失败
-		if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
+		if err = svc.repo.SetTransactionStatus(transId, model.Trans_cancel_fail); err != nil {
 			//TODO 事务状态修改失败 操作
 			return err
 		}
@@ -109,13 +109,13 @@ func (svc Service) Cancel(transId int64, req *model.DoingReq, bus *model.TCCBus,
 	}
 
 	//for _, v := range ids {
-	//	if err = svc.dao.SetStepStatus(v, model.Step_cancel_success); err != nil {
+	//	if err = svc.repository.SetStepStatus(v, model.Step_cancel_success); err != nil {
 	//		//TODO 状态修改失败
 	//		return
 	//	}
 	//}
 
-	if err = svc.dao.SetTransactionStatus(transId, model.Trans_cancel_success); err != nil {
+	if err = svc.repo.SetTransactionStatus(transId, model.Trans_cancel_success); err != nil {
 		//TODO
 		return
 	}
@@ -133,7 +133,7 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 		group.Go(func(ctx context.Context) error {
 			response, err = svc.tcc.Confirm(transId, req, v)
 			if err != nil {
-				if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
+				if err = svc.repo.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
 					zlog.Infof("set transaction confirm_fail error(%v)", err)
 					return err
 				}
@@ -143,7 +143,7 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 
 			if response.Code != 0 {
 				zlog.Infof("do confirm error(%s)", response.Msg)
-				if err = svc.dao.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
+				if err = svc.repo.SetTransactionStatus(transId, model.Trans_confirm_fail); err != nil {
 					zlog.Infof("set transaction confirm_fail error(%v)", err)
 					return err
 				}
@@ -155,12 +155,12 @@ func (svc Service) Confirm(transId int64, req *model.DoingReq, bus *model.TCCBus
 	}
 
 	group.Wait()
-	if err := svc.dao.SetTransactionStatus(transId, model.Trans_confirm_success); err != nil {
+	if err := svc.repo.SetTransactionStatus(transId, model.Trans_confirm_success); err != nil {
 	}
 
 	return
 }
 
 func (svc Service) TaskGetTransactionList() []*model.Transaction {
-	return svc.dao.GetExTransactionList()
+	return svc.repo.GetExTransactionList()
 }

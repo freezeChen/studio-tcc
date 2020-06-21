@@ -26,7 +26,6 @@ func main() {
 	s := service.New(cfg)
 	engine := gin.Default()
 	http.InitRouter(engine, s)
-
 	t := task.New(s)
 	t.Run()
 

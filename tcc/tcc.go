@@ -19,7 +19,7 @@ type Tcc interface {
 type tcc struct {
 }
 
-func New() *tcc {
+func New() Tcc {
 	return &tcc{}
 }
 

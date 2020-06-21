@@ -1,6 +1,6 @@
 /*
    @Time : 2019-07-09 21:57:17
-   @Author : 
+   @Author :
    @File : model
    @Software: server
 */
@@ -15,9 +15,8 @@ import (
 	"net/url"
 )
 
-
 type JsonResult struct {
-	Code int       `json:"code"`
+	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
 	Data interface{} `json:"data,omitempty"`
 }
@@ -52,7 +51,6 @@ func (self *JsonResult) Response(ctx *gin.Context) {
 		zlog.ApiErrorf(p, "错误:%s", self.Msg)
 	}
 
-	str, _ := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(self)
+	str, _ := jsoniter.Marshal(self)
 	ctx.Data(http.StatusOK, "application/json; charset=utf-8", str)
 }
-

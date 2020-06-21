@@ -1,10 +1,10 @@
 /*
    @Time : 2019-07-09 21:57:17
    @Author :
-   @File : dao
+   @File : repository
    @Software: server
 */
-package dao
+package repository
 
 import (
 	"errors"
@@ -22,13 +22,23 @@ import (
 
 const _URL = "http://localhost:8081/"
 
-type Dao struct {
+type Repository interface {
+	GetBus() *model.TCCBus
+	GentTransaction(busId int64, param string) *model.Transaction
+	GetExTransactionList() []*model.Transaction
+	SaveTryStep(ts []*model.TryStep) error
+	DoCancel(transId int64, req *model.DoingReq, steps []*model.TryStep) ([]int64, error)
+	SetTransactionStatus(id int64, status int64) error
+	SetStepStatus(id int64, status int) error
+}
+
+type MysqlRepository struct {
 	Db    xorm.EngineInterface
 	Redis *redis.Redis
 }
 
-func New(c *conf.Config) (dao *Dao) {
-	dao = &Dao{
+func New(c *conf.Config) (repo Repository) {
+	repo = &MysqlRepository{
 		Db:    mysql.New(c.Mysql),
 		Redis: redis.New(c.Redis),
 	}
@@ -36,7 +46,7 @@ func New(c *conf.Config) (dao *Dao) {
 }
 
 //获取事务节点
-func (d Dao) GetOrderBus() *model.TCCBus {
+func (d MysqlRepository) GetBus() *model.TCCBus {
 
 	var b = new(model.TCCBus)
 	b.Id = 1
@@ -88,7 +98,7 @@ func (d Dao) GetOrderBus() *model.TCCBus {
 }
 
 //新增事务
-func (d Dao) GentTransaction(busId int64, param string) *model.Transaction {
+func (d MysqlRepository) GentTransaction(busId int64, param string) *model.Transaction {
 	var trans = &model.Transaction{
 		Id:     snowflake.GenID(),
 		Busid:  busId,
@@ -106,7 +116,7 @@ func (d Dao) GentTransaction(busId int64, param string) *model.Transaction {
 }
 
 //(1:try成功;2:try失败;3:cancel成功;4:cancel失败;5:confirm成功;6:confirm失败;7:人工干预)
-func (d Dao) GetExTransactionList() []*model.Transaction {
+func (d MysqlRepository) GetExTransactionList() []*model.Transaction {
 	var list = make([]*model.Transaction, 0)
 	if err := d.Db.SQL(`select * from transaction.transaction 
 			where status=1 or (status=2 and try_times<5) or (status=4 and cancel_times<5) or (status=6 or confirm_times<5)
@@ -117,7 +127,7 @@ func (d Dao) GetExTransactionList() []*model.Transaction {
 }
 
 //保存try步骤
-func (d Dao) SaveTryStep(ts []*model.TryStep) error {
+func (d MysqlRepository) SaveTryStep(ts []*model.TryStep) error {
 
 	session := d.Db.NewSession()
 	session.Begin()
@@ -135,7 +145,7 @@ func (d Dao) SaveTryStep(ts []*model.TryStep) error {
 	return nil
 }
 
-func (d Dao) DoCancel(transId int64, req *model.DoingReq, steps []*model.TryStep) (ids []int64, err error) {
+func (d MysqlRepository) DoCancel(transId int64, req *model.DoingReq, steps []*model.TryStep) (ids []int64, err error) {
 	for _, v := range steps {
 		response, err1 := util.HttpPost(v.Tcc.Cancel.Url, &model.CallReq{TransId: transId, Param: req.Param})
 		if err1 != nil {
@@ -152,7 +162,7 @@ func (d Dao) DoCancel(transId int64, req *model.DoingReq, steps []*model.TryStep
 }
 
 //修改事务状态
-func (d Dao) SetTransactionStatus(id int64, status int64) error {
+func (d MysqlRepository) SetTransactionStatus(id int64, status int64) error {
 	var sql string
 
 	switch status {
@@ -177,7 +187,7 @@ func (d Dao) SetTransactionStatus(id int64, status int64) error {
 	return nil
 }
 
-func (d Dao) SetStepStatus(id int64, status int) error {
+func (d MysqlRepository) SetStepStatus(id int64, status int) error {
 
 	result, err := d.Db.Exec("update try_step set status = ? where id =?;", status, id)
 	if err != nil {
